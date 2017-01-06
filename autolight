@@ -126,12 +126,12 @@ def get_config(config, CONF):
 
 if __name__ == '__main__':
     prev_illum = 0
-    config = CONFIG_HOME + "/config"
+    config = CONFIG_LOCAL + "/config"
 
     if not get_config(config, CONF):
-        config = CONFIG_GLOBAL + "/config"
+        config = CONFIG_HOME + "/config"
     if not get_config(config, CONF):
-        config = CONFIG_LOCAL + "/config"
+        config = CONFIG_GLOBAL + "/config"
     if not get_config(config, CONF):
         print("Unable to find a useful config file!")
         quit()
