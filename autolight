@@ -162,4 +162,5 @@ if __name__ == '__main__':
         subprocess.run(CONF['LIGHT'] + " -S " + str(brightness), shell=True)
         if (CONF['DEBUG']):
             print("illum: " + str(illum) + ", brightness: " + brightness)
+        prev_illum = illum
         time.sleep(CONF['INTERVAL'])
