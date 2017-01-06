@@ -1,41 +1,165 @@
 #!/usr/bin/env python
+#
+# autolight
+# Automatically adjust display brightness based on the
+# amount of ambient light.
+#
+# Copyright 2017 Clayton Craft (craftyguy) <clayton@craftyguy.net>
+#
+# autolight is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# autolight is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with autolight.  If not, see <http://www.gnu.org/licenses/>.
 
 
 from __future__ import print_function, division
 
 import subprocess
 import os
-import stat
 import math
 import time
+import configparser
 
-# Interval (in seconds) to read from light sensor
-INTERVAL=5
-MAX_ILLUM=500
-MIN_ILLUM=22
-MAX_BRIGHT=100
-MIN_BRIGHT=20
-ALP_DEV="/sys/bus/iio/devices/iio:device0/in_illuminance_raw"
+CONFIG_HOME=os.path.expanduser("~/.config/autolight")
+CONFIG_GLOBAL="/etc/autolight"
+CONFIG_LOCAL=os.getcwd()
+
+#
+# Defaults (can be overridden with config file
+#
 
 
-def calc_brightness(illum):
-    brightness = math.log(illum - (MIN_ILLUM-1)) * 10
-    if brightness < MIN_BRIGHT:
-        brightness = MIN_BRIGHT
-    elif brightness > MAX_BRIGHT:
-        brightness = MAX_BRIGHT
+CONF = {
+    # Interval (in seconds) to read from light sensor
+    'INTERVAL' : 5,
+    # Max and min illumination values from sensor to act on
+    # This may not be the actual min/max returned by the sensor,
+    # but merely allows for setting a bounds to where min/max
+    # brightness can be set
+    'MAX_ILLUM' : 500,
+    'MIN_ILLUM' : 22,
+    # Max and min brightness values, as a percentage of max (real)
+    # brightness. App uses "light" to adjust brightness based on a
+    # percentage
+    'MAX_BRIGHT' : 100,
+    'MIN_BRIGHT' : 20,
+    # Sensor device to read from. May require acpi_alp driver.
+    'ALP_DEVICE' : "/sys/bus/iio/devices/iio:device0/in_illuminance_raw",
+    # Enable debug output
+    'DEBUG' : True,
+    # Path to 'light' application
+    'LIGHT' : "/usr/bin/light"
+}
+#
+# Calculate brightness as a logarithmic function of
+#   given illumination.
+#
+def calc_brightness(illum, min_b, max_b, min_i):
+    brightness = math.log(illum - (min_i - 1)) * 10
+    # Make sure brightness is within given bounds
+    if brightness < min_b:
+        brightness = min_b
+    elif brightness > max_b:
+        brightness = max_b
     return brightness
+
+def write_config(config):
+    #TODO: App should write a valid config using ConfigParser
+    try:
+        os.makedirs(CONFIG_HOME, exist_ok=True)
+        f = open(config, 'w')
+    except Exception as e:
+        print("Unable to create config, defaults will be used!")
+        print(str(e))
+        return
+    print("[autolight]\n"
+            "# Interval (in seconds) to read light sensor\n"
+            "INTERVAL=5\n"
+            "# Max/min illumination values to act on from sensor\n"
+            "MAX_ILLUM=500\n"
+            "MIN_ILLUM=22\n"
+            "# Max/min brightness values, as percentage of max\n"
+            "# (real) brightness. 'light' is used to adjust based\n"
+            "# on this percentage\n"
+            "MAX_BRIGHT=100\n"
+            "MIN_BRIGHT=20\n"
+            "# Sensor device to read from. May require acpi_alp driver!\n"
+            "ALP_DEVICE=\"/sys/bus/iio/devices/iio:device0/in_illuminance_raw\"\n"
+            "# Enable debug output\n"
+            "DEBUG=False\n"
+            "# Path to 'light' application\n"
+            "LIGHT=\"/usr/bin/light\"\n", file=f)
+
+
+
+def get_config(config, CONF):
+    if CONF['DEBUG']:
+        print("Trying config file: " + config)
+    if not os.access(config, os.R_OK):
+        return False
+    cf = configparser.ConfigParser()
+    cf.read(config)
+    if not cf.has_section("autolight"):
+        return False
+    try:
+        CONF['INTERVAL'] = cf['autolight'].getint('INTERVAL', CONF['INTERVAL'])
+        CONF['MAX_ILLUM'] = cf['autolight'].getint('MAX_ILLUM', CONF['MAX_ILLUM'])
+        CONF['MIN_ILLUM'] = cf['autolight'].getint('MIN_ILLUM', CONF['MIN_ILLUM'])
+        CONF['MAX_BRIGHT'] = cf['autolight'].getint('MAX_BRIGHT', CONF['MAX_BRIGHT'])
+        CONF['MIN_BRIGHT'] = cf['autolight'].getint('MIN_BRIGHT', CONF['MIN_BRIGHT'])
+        CONF['ALP_DEVICE'] = cf['autolight'].get('ALP_DEVICE', CONF['ALP_DEVICE'])
+        CONF['DEBUG'] = cf['autolight'].getboolean('DEBUG', CONF['DEBUG'])
+        CONF['LIGHT'] = cf['autolight'].get('LIGHT', CONF['LIGHT'])
+    except Exception as e:
+        print(str(e))
+        return False
+    return True
 
 
 if __name__ == '__main__':
     prev_illum = 0
+    config = CONFIG_HOME + "/config"
+
+    if not get_config(config, CONF):
+        config = CONFIG_GLOBAL + "/config"
+    if not get_config(config, CONF):
+        config = CONFIG_LOCAL + "/config"
+    if not get_config(config, CONF):
+        print("Unable to find a useful config file!")
+        quit()
+
+    if CONF['DEBUG']:
+        print("Using configuration:\n", CONF)
+
+    # Validate path to light app
+    if not os.access(CONF['LIGHT'], os.X_OK):
+        print("Unable to execute light application at " + CONF['LIGHT'])
+        quit()
+
+    # main loop
     while True:
-        f = open(ALP_DEV, 'r')
-        illum = int(f.read())
-        f.close()
+        try:
+            f = open(CONF['ALP_DEVICE'], 'r')
+            illum = int(f.read())
+            f.close()
+        except Exception as e:
+            print(str(e))
+            break
         if illum  == prev_illum:
             continue
-        print("illum: " + str(illum))
-        brightness = round(calc_brightness(illum))
-        subprocess.run("/usr/bin/light -S " + str(brightness), shell=True)
-        time.sleep(INTERVAL)
+        # Calculate brightness
+        brightness = round(calc_brightness(illum, CONF['MIN_BRIGHT'],
+                            CONF['MAX_BRIGHT'], CONF['MIN_ILLUM']))
+        # Run light app. to set brightness
+        subprocess.run(CONF['LIGHT'] + " -S " + str(brightness), shell=True)
+        if (CONF['DEBUG']):
+            print("illum: " + str(illum) + ", brightness: " + brightness)
+        time.sleep(CONF['INTERVAL'])
