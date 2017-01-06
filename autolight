@@ -54,7 +54,7 @@ CONF = {
     # Sensor device to read from. May require acpi_alp driver.
     'ALP_DEVICE' : "/sys/bus/iio/devices/iio:device0/in_illuminance_raw",
     # Enable debug output
-    'DEBUG' : True,
+    'DEBUG' : False,
     # Path to 'light' application
     'LIGHT' : "/usr/bin/light"
 }
