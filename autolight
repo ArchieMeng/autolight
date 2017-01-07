@@ -35,8 +35,6 @@ CONFIG_LOCAL=os.getcwd()
 #
 # Defaults (can be overridden with config file
 #
-
-
 CONF = {
     # Interval (in seconds) to read from light sensor
     'INTERVAL' : 5,
@@ -60,6 +58,8 @@ CONF = {
     # Enable smooth transitions to new brightness value (may use more CPU power)
     'SMOOTH' : True
 }
+
+
 #
 # Calculate brightness as a logarithmic function of
 #   given illumination.
@@ -71,7 +71,8 @@ def calc_brightness(illum, min_b, max_b, min_i):
         brightness = min_b
     elif brightness > max_b:
         brightness = max_b
-    return brightness
+    return round(brightness)
+
 
 def write_config(config):
     #TODO: App should write a valid config using ConfigParser
@@ -101,7 +102,6 @@ def write_config(config):
             "LIGHT=\"/usr/bin/light\"\n", file=f)
 
 
-
 def get_config(config, CONF):
     if CONF['DEBUG']:
         print("Trying config file: " + config)
@@ -126,6 +126,17 @@ def get_config(config, CONF):
         print(str(e))
         return False
     return True
+
+
+def read_als(dev):
+    try:
+        f = open(dev, 'r')
+        illum = int(f.read())
+        f.close()
+    except Exception as e:
+        print(str(e))
+        return 0
+    return illum
 
 
 if __name__ == '__main__':
@@ -153,18 +164,17 @@ if __name__ == '__main__':
     # main loop
     while True:
         time.sleep(CONF['INTERVAL'])
-        try:
-            f = open(CONF['ALP_DEVICE'], 'r')
-            illum = int(f.read())
-            f.close()
-        except Exception as e:
-            print(str(e))
-            break
-        if illum  == prev_illum:
+        illum = read_als(CONF['ALP_DEVICE'])
+        # This order matters, because checking cur == prev first could end
+        # in an infinite loop if device is unreadable:
+        if not illum:
+            quit()
+        elif illum  == prev_illum:
             continue
+
         # Calculate brightness
-        brightness = round(calc_brightness(illum, CONF['MIN_BRIGHT'],
-                            CONF['MAX_BRIGHT'], CONF['MIN_ILLUM']))
+        brightness = calc_brightness(illum, CONF['MIN_BRIGHT'],
+                            CONF['MAX_BRIGHT'], CONF['MIN_ILLUM'])
         #
         # Run light app. to set brightness
         #
