@@ -147,6 +147,7 @@ if __name__ == '__main__':
 
     # main loop
     while True:
+        time.sleep(CONF['INTERVAL'])
         try:
             f = open(CONF['ALP_DEVICE'], 'r')
             illum = int(f.read())
@@ -164,4 +165,3 @@ if __name__ == '__main__':
         if (CONF['DEBUG']):
             print("illum: " + str(illum) + ", brightness: " + str(brightness))
         prev_illum = illum
-        time.sleep(CONF['INTERVAL'])
