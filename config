@@ -15,3 +15,7 @@ ALP_DEVICE=/sys/bus/iio/devices/iio:device0/in_illuminance_raw
 DEBUG=False
 # Path to 'light' application
 LIGHT=/usr/bin/light
+# Enable smooth transitioning between different brightness settings.
+# Warning: This is experimental, unoptimized, and will likely lead to higher
+# battery consumption.
+SMOOTH=False

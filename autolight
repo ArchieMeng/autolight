@@ -56,7 +56,9 @@ CONF = {
     # Enable debug output
     'DEBUG' : False,
     # Path to 'light' application
-    'LIGHT' : '/usr/bin/light'
+    'LIGHT' : '/usr/bin/light',
+    # Enable smooth transitions to new brightness value (may use more CPU power)
+    'SMOOTH' : True
 }
 #
 # Calculate brightness as a logarithmic function of
@@ -118,6 +120,8 @@ def get_config(config, CONF):
         CONF['ALP_DEVICE'] = cf['autolight'].get('ALP_DEVICE', CONF['ALP_DEVICE'])
         CONF['DEBUG'] = cf['autolight'].getboolean('DEBUG', CONF['DEBUG'])
         CONF['LIGHT'] = cf['autolight'].get('LIGHT', CONF['LIGHT'])
+        CONF['SMOOTH'] = cf['autolight'].getboolean('SMOOTH', CONF['SMOOTH'])
+
     except Exception as e:
         print(str(e))
         return False
@@ -126,6 +130,7 @@ def get_config(config, CONF):
 
 if __name__ == '__main__':
     prev_illum = 0
+    prev_brightness = 0
     config = CONFIG_LOCAL + "/config"
 
     if not get_config(config, CONF):
@@ -160,8 +165,27 @@ if __name__ == '__main__':
         # Calculate brightness
         brightness = round(calc_brightness(illum, CONF['MIN_BRIGHT'],
                             CONF['MAX_BRIGHT'], CONF['MIN_ILLUM']))
+        #
         # Run light app. to set brightness
-        subprocess.run(CONF['LIGHT'] + " -S " + str(brightness), shell=True)
+        #
+        # Smooth transition - very much a hack and unoptimized for CPU util.
+        # and sanity. There is visible flickering since the rate of change is
+        # not that high due to how it's being changed (repeated calls to 'light')
+        if CONF['SMOOTH'] and prev_brightness:
+            # Set direction of transition, based on whether brightness is up
+            # or down
+            if prev_brightness < brightness:
+                d = 1
+            else:
+                d = -1
+            for i in range(prev_brightness, brightness, d):
+                subprocess.run(CONF['LIGHT'] + " -S " + str(i), shell=True)
+                time.sleep(.02)
+        # No smooth transition
+        else:
+            subprocess.run(CONF['LIGHT'] + " -S " + str(brightness), shell=True)
+
         if (CONF['DEBUG']):
             print("illum: " + str(illum) + ", brightness: " + str(brightness))
         prev_illum = illum
+        prev_brightness = brightness
