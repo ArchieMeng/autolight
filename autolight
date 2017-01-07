@@ -52,11 +52,11 @@ CONF = {
     'MAX_BRIGHT' : 100,
     'MIN_BRIGHT' : 20,
     # Sensor device to read from. May require acpi_alp driver.
-    'ALP_DEVICE' : "/sys/bus/iio/devices/iio:device0/in_illuminance_raw",
+    'ALP_DEVICE' : '/sys/bus/iio/devices/iio:device0/in_illuminance_raw',
     # Enable debug output
     'DEBUG' : False,
     # Path to 'light' application
-    'LIGHT' : "/usr/bin/light"
+    'LIGHT' : '/usr/bin/light'
 }
 #
 # Calculate brightness as a logarithmic function of
@@ -141,7 +141,8 @@ if __name__ == '__main__':
 
     # Validate path to light app
     if not os.access(CONF['LIGHT'], os.X_OK):
-        print("Unable to execute light application at " + CONF['LIGHT'])
+        print(CONF['LIGHT'])
+        print("Unable to find light application at " + CONF['LIGHT'])
         quit()
 
     # main loop
@@ -161,6 +162,6 @@ if __name__ == '__main__':
         # Run light app. to set brightness
         subprocess.run(CONF['LIGHT'] + " -S " + str(brightness), shell=True)
         if (CONF['DEBUG']):
-            print("illum: " + str(illum) + ", brightness: " + brightness)
+            print("illum: " + str(illum) + ", brightness: " + str(brightness))
         prev_illum = illum
         time.sleep(CONF['INTERVAL'])

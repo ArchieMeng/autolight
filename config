@@ -1,6 +1,6 @@
 [autolight]
 # Interval (in seconds) to read light sensor
-INTERVAL=5
+INTERVAL=3
 # Max/min illumination values to act on from sensor
 MAX_ILLUM=500
 MIN_ILLUM=22
@@ -10,8 +10,8 @@ MIN_ILLUM=22
 MAX_BRIGHT=100
 MIN_BRIGHT=20
 # Sensor device to read from. May require acpi_alp driver!
-ALP_DEVICE="/sys/bus/iio/devices/iio:device0/in_illuminance_raw"
+ALP_DEVICE=/sys/bus/iio/devices/iio:device0/in_illuminance_raw
 # Enable debug output
 DEBUG=False
 # Path to 'light' application
-LIGHT="/usr/bin/light"
+LIGHT=/usr/bin/light
