@@ -19,7 +19,7 @@ Modify the included config file and place it in one of these locations (in order
 
 #### Arch Linux
 
-*Stay tuned for a package in AUR!*
+Install [autolight package](https://aur.archlinux.org/packages/autolight/) from AUR.
 
 #### Other Linux Folks
 
