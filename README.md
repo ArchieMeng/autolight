@@ -27,6 +27,8 @@ autolight looks for a config file (named "config") in ```/etc/autolight/```, ```
 
 ##### Requirements
 
+- A device with an ambient light sensor (e.g. acpi_als). This was tested on a Dell XPS 13 9333 with kernel 4.8.
+
 - [light](https://github.com/haikarainen/light)
 
 - Python 3
