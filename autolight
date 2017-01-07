@@ -190,7 +190,7 @@ if __name__ == '__main__':
                 d = -1
             for i in range(prev_brightness, brightness, d):
                 subprocess.run(CONF['LIGHT'] + " -S " + str(i), shell=True)
-                time.sleep(.02)
+                time.sleep(.03)
         # No smooth transition
         else:
             subprocess.run(CONF['LIGHT'] + " -S " + str(brightness), shell=True)
