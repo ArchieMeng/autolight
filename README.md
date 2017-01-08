@@ -9,11 +9,13 @@ autolight is designed to be run as a regular user, NOT as root. This application
 Modify the included config file and place it in one of these locations (in order of precedence):
 
 ```
-/etc/autolight/config
+./config
 
 ~/.config/autolight/config
 
-./config
+
+/etc/autolight/config
+
 ```
 See the sample ```config``` file for available configuration options. At the very least, you'll need to set the ALS device.
 
