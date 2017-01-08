@@ -130,9 +130,8 @@ def get_config(config, CONF):
 
 def read_als(dev):
     try:
-        f = open(dev, 'r')
-        illum = int(f.read())
-        f.close()
+        with open(dev, 'r') as f:
+            illum = int(f.read())
     except Exception as e:
         print(str(e))
         return 0
