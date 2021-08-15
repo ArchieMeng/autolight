@@ -5,6 +5,7 @@
 # amount of ambient light.
 #
 # Copyright 2017 Clayton Craft (craftyguy) <clayton@craftyguy.net>
+# Copyright 2021 Archie Meng (archiemeng) <archiemeng@protonmail.com>
 #
 # autolight is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -64,8 +65,12 @@ CONF = {
 # Calculate brightness as a logarithmic function of
 #   given illumination.
 #
-def calc_brightness(illum, min_b, max_b, min_i):
-    brightness = math.log(illum - (min_i - 1)) * 10
+def norm(v, min_v, max_v, min_out, max_out):
+    v = min(max_v, max(v, min_v))
+    return (v - min_v) * ((max_out - min_out) / (max_v - min_v)) + min_out
+
+def calc_brightness(illum, min_b, max_b, min_i, max_i):
+    brightness = math.log(norm(illum, min_i, max_i, 1, 100)) * 22
     # Make sure brightness is within given bounds
     if brightness < min_b:
         brightness = min_b
@@ -130,11 +135,12 @@ def get_config(config, CONF):
 
 def read_als(dev):
     try:
-        with open(dev, 'r') as f:
-            illum = int(f.read())
+        f = open(dev, 'r')
+        illum = int(f.read())
+        f.close()
     except Exception as e:
         print(str(e))
-        return 0
+        return -1
     return illum
 
 
@@ -162,18 +168,18 @@ if __name__ == '__main__':
 
     # main loop
     while True:
-        time.sleep(CONF['INTERVAL'])
         illum = read_als(CONF['ALP_DEVICE'])
         # This order matters, because checking cur == prev first could end
         # in an infinite loop if device is unreadable:
-        if not illum:
+        if illum < 0:
             quit()
-        elif illum  == prev_illum:
+        elif illum == prev_illum:
+            time.sleep(CONF['INTERVAL'])
             continue
-
+        
         # Calculate brightness
-        brightness = calc_brightness(illum, CONF['MIN_BRIGHT'],
-                            CONF['MAX_BRIGHT'], CONF['MIN_ILLUM'])
+        brightness = calc_brightness(illum, CONF['MIN_BRIGHT'], CONF['MAX_BRIGHT'], 
+                CONF['MIN_ILLUM'], CONF['MAX_ILLUM'])
         #
         # Run light app. to set brightness
         #
@@ -189,7 +195,7 @@ if __name__ == '__main__':
                 d = -1
             for i in range(prev_brightness, brightness, d):
                 subprocess.run(CONF['LIGHT'] + " -S " + str(i), shell=True)
-                time.sleep(.03)
+                time.sleep(.1)
         # No smooth transition
         else:
             subprocess.run(CONF['LIGHT'] + " -S " + str(brightness), shell=True)
@@ -198,3 +204,4 @@ if __name__ == '__main__':
             print("illum: " + str(illum) + ", brightness: " + str(brightness))
         prev_illum = illum
         prev_brightness = brightness
+        time.sleep(CONF['INTERVAL'])
