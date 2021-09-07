@@ -5,7 +5,6 @@
 # amount of ambient light.
 #
 # Copyright 2017 Clayton Craft (craftyguy) <clayton@craftyguy.net>
-# Copyright 2021 Archie Meng (archiemeng) <archiemeng@protonmail.com>
 #
 # autolight is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -57,20 +56,30 @@ CONF = {
     # Path to 'light' application
     'LIGHT' : '/usr/bin/light',
     # Enable smooth transitions to new brightness value (may use more CPU power)
-    'SMOOTH' : True
+    'SMOOTH' : True,
+    'CURVE_FACTOR' : 50 / math.log(10),
 }
 
+
+def norm(v, min_v, max_v, min_out, max_out):
+    '''
+    Normalize value v to range [min_out, max_out] from [min_v, max_v]. Out of range value will be replaced with the boundary values min_out and max_out.
+    '''
+    v = min(max_v, max(v, min_v))
+    return (v - min_v) * ((max_out - min_out) / (max_v - min_v)) + min_out
+
+def recalc_curve_factor(illum, new_b, min_i, max_i):
+    '''
+    recalculate the curve factor constant based on the given brightness at the given illumination value
+    '''
+    return new_b / math.log(norm(illum, min_i, max_i, 1, 100))
 
 #
 # Calculate brightness as a logarithmic function of
 #   given illumination.
 #
-def norm(v, min_v, max_v, min_out, max_out):
-    v = min(max_v, max(v, min_v))
-    return (v - min_v) * ((max_out - min_out) / (max_v - min_v)) + min_out
-
-def calc_brightness(illum, min_b, max_b, min_i, max_i):
-    brightness = math.log(norm(illum, min_i, max_i, 1, 100)) * 22
+def calc_brightness(illum, min_b, max_b, min_i, max_i, factor):
+    brightness = math.log(norm(illum, min_i, max_i, 1, 100)) * factor
     # Make sure brightness is within given bounds
     if brightness < min_b:
         brightness = min_b
@@ -144,6 +153,11 @@ def read_als(dev):
     return illum
 
 
+def read_brightness(light_command):
+    result = subprocess.run(light_command + " -G ", shell=True, capture_output=True).stdout
+    return round(float(result.decode()))
+
+
 if __name__ == '__main__':
     prev_illum = 0
     prev_brightness = 0
@@ -169,18 +183,22 @@ if __name__ == '__main__':
     # main loop
     while True:
         illum = read_als(CONF['ALP_DEVICE'])
+        # Calculate brightness
+        brightness = calc_brightness(illum, CONF['MIN_BRIGHT'], CONF['MAX_BRIGHT'], 
+                CONF['MIN_ILLUM'], CONF['MAX_ILLUM'], CONF["CURVE_FACTOR"])
         # This order matters, because checking cur == prev first could end
         # in an infinite loop if device is unreadable:
         if illum < 0:
             quit()
-        elif illum == prev_illum:
+        elif illum  == prev_illum:
+            cur_brightness = read_brightness(CONF["LIGHT"])
+            if cur_brightness != brightness:
+                CONF["CURVE_FACTOR"] = recalc_curve_factor(illum, cur_brightness, 
+                        CONF['MIN_ILLUM'], CONF['MAX_ILLUM'])
             time.sleep(CONF['INTERVAL'])
             continue
         
-        # Calculate brightness
-        brightness = calc_brightness(illum, CONF['MIN_BRIGHT'], CONF['MAX_BRIGHT'], 
-                CONF['MIN_ILLUM'], CONF['MAX_ILLUM'])
-        #
+                #
         # Run light app. to set brightness
         #
         # Smooth transition - very much a hack and unoptimized for CPU util.
