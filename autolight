@@ -72,7 +72,11 @@ def recalc_curve_factor(illum, new_b, min_i, max_i):
     '''
     recalculate the curve factor constant based on the given brightness at the given illumination value
     '''
-    return new_b / math.log(norm(illum, min_i, max_i, 1, 100))
+    # do not recalculate factor when calculated bright is 0 (which cause divide by 0 exception)
+    if illum > min_i:
+        return new_b / math.log(norm(illum, min_i, max_i, 1, 100))
+    else:
+        return CONF["CURVE_FACTOR"]
 
 #
 # Calculate brightness as a logarithmic function of
