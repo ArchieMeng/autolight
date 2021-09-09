@@ -194,6 +194,7 @@ if __name__ == '__main__':
         elif illum  == prev_illum:
             cur_brightness = read_brightness(CONF["LIGHT"])
             if cur_brightness != brightness:
+                prev_brightness = cur_brightness
                 CONF["CURVE_FACTOR"] = recalc_curve_factor(illum, cur_brightness, 
                         CONF['MIN_ILLUM'], CONF['MAX_ILLUM'])
             time.sleep(CONF['INTERVAL'])
