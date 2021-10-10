@@ -193,7 +193,7 @@ if __name__ == '__main__':
             quit()
         elif illum  == prev_illum:
             cur_brightness = read_brightness(CONF["LIGHT"])
-            if cur_brightness != brightness:
+            if cur_brightness != 0 and cur_brightness != brightness:
                 prev_brightness = cur_brightness
                 CONF["CURVE_FACTOR"] = recalc_curve_factor(illum, cur_brightness, 
                         CONF['MIN_ILLUM'], CONF['MAX_ILLUM'])
@@ -215,7 +215,7 @@ if __name__ == '__main__':
                 d = -1
             for i in range(prev_brightness, brightness, d):
                 subprocess.run(CONF['LIGHT'] + " -S " + str(i), shell=True)
-                time.sleep(.1)
+                time.sleep(.03)
         # No smooth transition
         else:
             subprocess.run(CONF['LIGHT'] + " -S " + str(brightness), shell=True)
