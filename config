@@ -1,4 +1,4 @@
-[autolight]
+[smartlight]
 # Interval (in seconds) to read light sensor
 INTERVAL=0
 # Max/min illumination values to act on from sensor

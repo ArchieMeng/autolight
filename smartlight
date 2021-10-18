@@ -1,24 +1,24 @@
 #!/usr/bin/env python
 #
-# autolight
+# smartlight
 # Automatically adjust display brightness based on the
 # amount of ambient light.
 #
 # Copyright 2017 Clayton Craft (craftyguy) <clayton@craftyguy.net>
 # Copyright 2021 Archie Meng (archiemeng) <archiemeng@protonmail.com>
 #
-# autolight is free software: you can redistribute it and/or modify
+# smartlight is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# autolight is distributed in the hope that it will be useful,
+# smartlight is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with autolight.  If not, see <http://www.gnu.org/licenses/>.
+# along with smartlight.  If not, see <http://www.gnu.org/licenses/>.
 
 
 from __future__ import print_function, division
@@ -29,8 +29,8 @@ import math
 import time
 import configparser
 
-CONFIG_HOME=os.path.expanduser("~/.config/autolight")
-CONFIG_GLOBAL="/etc/autolight"
+CONFIG_HOME=os.path.expanduser("~/.config/smartlight")
+CONFIG_GLOBAL="/etc/smartlight"
 CONFIG_LOCAL=os.getcwd()
 
 #
@@ -99,7 +99,7 @@ def write_config(config):
         print("Unable to create config, defaults will be used!")
         print(str(e))
         return
-    print("[autolight]\n"
+    print("[smartlight]\n"
             "# Interval (in seconds) to read light sensor\n"
             "INTERVAL=5\n"
             "# Max/min illumination values to act on from sensor\n"
@@ -125,18 +125,18 @@ def get_config(config, CONF):
         return False
     cf = configparser.ConfigParser()
     cf.read(config)
-    if not cf.has_section("autolight"):
+    if not cf.has_section("smartlight"):
         return False
     try:
-        CONF['INTERVAL'] = cf['autolight'].getint('INTERVAL', CONF['INTERVAL'])
-        CONF['MAX_ILLUM'] = cf['autolight'].getint('MAX_ILLUM', CONF['MAX_ILLUM'])
-        CONF['MIN_ILLUM'] = cf['autolight'].getint('MIN_ILLUM', CONF['MIN_ILLUM'])
-        CONF['MAX_BRIGHT'] = cf['autolight'].getint('MAX_BRIGHT', CONF['MAX_BRIGHT'])
-        CONF['MIN_BRIGHT'] = cf['autolight'].getint('MIN_BRIGHT', CONF['MIN_BRIGHT'])
-        CONF['ALP_DEVICE'] = cf['autolight'].get('ALP_DEVICE', CONF['ALP_DEVICE'])
-        CONF['DEBUG'] = cf['autolight'].getboolean('DEBUG', CONF['DEBUG'])
-        CONF['LIGHT'] = cf['autolight'].get('LIGHT', CONF['LIGHT'])
-        CONF['SMOOTH'] = cf['autolight'].getboolean('SMOOTH', CONF['SMOOTH'])
+        CONF['INTERVAL'] = cf['smartlight'].getint('INTERVAL', CONF['INTERVAL'])
+        CONF['MAX_ILLUM'] = cf['smartlight'].getint('MAX_ILLUM', CONF['MAX_ILLUM'])
+        CONF['MIN_ILLUM'] = cf['smartlight'].getint('MIN_ILLUM', CONF['MIN_ILLUM'])
+        CONF['MAX_BRIGHT'] = cf['smartlight'].getint('MAX_BRIGHT', CONF['MAX_BRIGHT'])
+        CONF['MIN_BRIGHT'] = cf['smartlight'].getint('MIN_BRIGHT', CONF['MIN_BRIGHT'])
+        CONF['ALP_DEVICE'] = cf['smartlight'].get('ALP_DEVICE', CONF['ALP_DEVICE'])
+        CONF['DEBUG'] = cf['smartlight'].getboolean('DEBUG', CONF['DEBUG'])
+        CONF['LIGHT'] = cf['smartlight'].get('LIGHT', CONF['LIGHT'])
+        CONF['SMOOTH'] = cf['smartlight'].getboolean('SMOOTH', CONF['SMOOTH'])
 
     except Exception as e:
         print(str(e))
